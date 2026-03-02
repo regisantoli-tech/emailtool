@@ -1,0 +1,51 @@
+import PySimpleGUI as sg
+from imap_client import IMAPClient, IMAPConfig
+from classifier import classify_email
+from auth_store import save_password, load_password
+
+sg.theme('DarkBlue3')
+
+layout = [
+    [sg.Text('EmailTool - Gerenciador IMAP', font=('Arial', 16, 'bold'))],
+    [sg.Text('E-mail:'), sg.InputText(key='email', size=(40, 1))],
+    [sg.Text('Senha de App:'), sg.InputText(key='password', password_char='*', size=(40, 1))],
+    [sg.Text('Servidor IMAP:'), sg.InputText(default_text='imap.gmail.com', key='server', size=(40, 1))],
+    [sg.Text('Mailbox:'), sg.InputText(default_text='INBOX', key='mailbox', size=(40, 1))],
+    [sg.Checkbox('Salvar senha', key='remember')],
+    [sg.Button('Conectar'), sg.Button('Sair')],
+    [sg.Multiline(size=(80, 20), key='output', disabled=True)],
+]
+
+window = sg.Window('EmailTool', layout)
+
+while True:
+    event, values = window.read()
+    
+    if event == sg.WINDOW_CLOSED or event == 'Sair':
+        break
+    
+    if event == 'Conectar':
+        try:
+            email = values['email']
+            password = values['password']
+            server = values['server']
+            mailbox = values['mailbox']
+            
+            if values['remember']:
+                save_password(email, password)
+            
+            cfg = IMAPConfig(server, email, password, mailbox)
+            client = IMAPClient(cfg)
+            
+            data = client.fetch_emails_page(1, 100, None, None, None, None)
+            
+            output = f"Total de e-mails: {data['total']}\n\n"
+            for e in data['items']:
+                cat, svc, snip = classify_email(e)
+                output += f"De: {e['sender']}\nAssunto: {e['subject']}\nCategoria: {cat}\nTrecho: {snip}\n{'='*80}\n"
+            
+            window['output'].update(output)
+        except Exception as ex:
+            window['output'].update(f"Erro: {str(ex)}")
+
+window.close()

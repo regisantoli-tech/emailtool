@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>EmailTool • Login</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="topbar">
+            <div class="brand">EmailTool <span class="badge">IMAP • Gmail</span></div>
+            <div class="badge">Localhost</div>
+        </div>
+        <div class="card">
+            <div class="hd">
+                <div>
+                    <h2>Conectar conta</h2>
+                    <div class="sub">Use <b>Senha de app</b> (16 caracteres). Não use sua senha normal do Gmail.</div>
+                </div>
+            </div>
+            <div class="bd">
+                <div class="row2">
+                    <div class="field">
+                        <label>E-mail</label>
+                        <input class="input" id="email" placeholder="seuemail@gmail.com" autocomplete="username">
+                    </div>
+                    <div class="field">
+                        <label>Senha de app</label>
+                        <input class="input" id="pass" type="password" placeholder="xxxx xxxx xxxx xxxx" autocomplete="current-password">
+                    </div>
+                </div>
+                <div class="row2">
+                    <div class="field">
+                        <label>Servidor IMAP</label>
+                        <input class="input" id="server" value="imap.gmail.com">
+                    </div>
+                    <div class="field">
+                        <label>Mailbox</label>
+                        <input class="input" id="mailbox" value="INBOX">
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Lixeira</label>
+                    <input class="input" id="trash" value="[Gmail]/Trash">
+                </div>
+                <div class="field" style="flex-direction:row;align-items:center;gap:10px;">
+                    <input id="remember" type="checkbox" checked>
+                    <label for="remember" style="margin:0;">Salvar senha no Windows (Credential Manager)</label>
+                </div>
+                <div class="btns">
+                    <button class="btn primary" onclick="login()">Entrar</button>
+                </div>
+                <div class="small" id="status"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        async function login(){
+            const payload={
+                email:document.getElementById("email").value.trim(),
+                app_password:document.getElementById("pass").value,
+                imap_server:document.getElementById("server").value.trim(),
+                mailbox:document.getElementById("mailbox").value.trim(),
+                trash:document.getElementById("trash").value.trim(),
+                remember:document.getElementById("remember").checked
+            };
+            document.getElementById("status").textContent="Conectando...";
+            const res=await fetch("/auth/login",{
+                method:"POST",
+                headers:{"Content-Type":"application/json"},
+                body:JSON.stringify(payload)
+            });
+            if(!res.ok){
+                let msg="Falha no login.";
+                try{const err=await res.json();msg=err.detail||msg;}catch{}
+                document.getElementById("status").textContent=msg;
+                return;
+            }
+            window.location.href="/";
+        }
+    </script>
+</body>
+</html>
